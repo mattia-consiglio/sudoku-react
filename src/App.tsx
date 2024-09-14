@@ -15,8 +15,32 @@ const App: React.FC = () => {
 		col: number
 	} | null>(null)
 	const [noteMode, setNoteMode] = useState<boolean>(false)
-	const [notes, setNotes] = useState<{ [key: string]: number[] }>({})
+	const [notes, setNotes] = useState<Map<string, Set<number>>>(new Map())
 	const [invalidCells, setInvalidCells] = useState<Set<string>>(new Set())
+
+	const removeNotes = useCallback(
+		(row: number, col: number, value: number) => {
+			const newNotes = new Map(notes)
+
+			// Remove from row and column
+			for (let i = 0; i < 9; i++) {
+				newNotes.get(`${i}-${col}`)?.delete(value)
+				newNotes.get(`${i}-${col}`)?.delete(value)
+			}
+
+			// Remove from 3x3 box
+			const startRow = Math.floor(row / 3) * 3
+			const startCol = Math.floor(col / 3) * 3
+			for (let i = 0; i < 3; i++) {
+				for (let j = 0; j < 3; j++) {
+					newNotes.get(`${startRow + i}-${startCol + j}`)?.delete(value)
+				}
+			}
+
+			setNotes(newNotes)
+		},
+		[notes],
+	)
 
 	const handleCellChange = useCallback(
 		(row: number, col: number, value: number) => {
@@ -27,12 +51,13 @@ const App: React.FC = () => {
 			const newGrid = [...grid]
 			if (value >= 1 && value <= 9) {
 				newGrid[row][col] = value
+				removeNotes(row, col, value)
 			} else {
 				newGrid[row][col] = 0
 			}
 			setGrid(newGrid)
 		},
-		[generatedGrid, grid],
+		[generatedGrid, grid, removeNotes],
 	)
 
 	const resetGrid = () => {
@@ -40,8 +65,25 @@ const App: React.FC = () => {
 		setGrid(newGrid)
 		setGeneratedGrid(JSON.parse(JSON.stringify(newGrid)))
 		setSelectedCell(null)
-		setNotes({})
+		setNotes(new Map())
 	}
+
+	const addNote = useCallback(
+		(row: number, col: number, value: number) => {
+			const noteKey = `${row}-${col}`
+			const noteValue = notes.get(noteKey) || new Set()
+			if (noteValue.has(value)) {
+				noteValue.delete(value)
+			} else {
+				noteValue.add(value)
+			}
+			if (noteValue.size === 0) {
+				notes.delete(noteKey)
+			}
+			setNotes(new Map(notes).set(noteKey, noteValue))
+		},
+		[notes],
+	)
 
 	const handleNumberClick = useCallback(
 		(value: number) => {
@@ -49,15 +91,7 @@ const App: React.FC = () => {
 				if (noteMode) {
 					if (!canPlaceNumber(grid, selectedCell.row, selectedCell.col, value))
 						return
-					const noteKey = `${selectedCell.row}-${selectedCell.col}`
-					const noteValue = notes[noteKey] || []
-					const updatedNoteValue = noteValue.includes(value)
-						? noteValue.filter((val) => val !== value)
-						: [...noteValue, value]
-					setNotes({
-						...notes,
-						[noteKey]: updatedNoteValue,
-					})
+					addNote(selectedCell.row, selectedCell.col, value)
 				} else {
 					const numberCanBePlaced = canPlaceNumber(
 						grid,
@@ -83,7 +117,7 @@ const App: React.FC = () => {
 				}
 			}
 		},
-		[grid, handleCellChange, invalidCells, noteMode, notes, selectedCell],
+		[grid, handleCellChange, invalidCells, noteMode, selectedCell, addNote],
 	)
 
 	const handleKeyDown = useCallback(

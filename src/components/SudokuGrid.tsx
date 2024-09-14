@@ -5,7 +5,7 @@ type SudokuGridProps = {
 	selectedCell: { row: number; col: number } | null
 	setSelectedCell: (cell: { row: number; col: number } | null) => void
 	generatedGrid: number[][] // Aggiungi questa proprietà per tracciare i valori generati
-	notes: { [key: string]: number[] }
+	notes: Map<string, Set<number>>
 	invalidCells: Set<string>
 }
 
@@ -36,7 +36,7 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
 						selectedCell.row === rowIndex &&
 						selectedCell.col === colIndex
 					const isGenerated = generatedGrid[rowIndex][colIndex] !== 0
-					const divClasses = `relative w-10 h-10 flex items-center justify-center border border-gray-400 text-3xl ${borderClasses} ${
+					const divClasses = `relative w-10 h-10 flex items-center justify-center border border-gray-400 text-3xl cursor-pointer select-none ${borderClasses} ${
 						isSelected ? "outline outline-blue-500 z-10" : ""
 					} ${!isGenerated ? (!invalidCells.has(`${rowIndex}-${colIndex}`) ? "text-blue-500" : "text-red-500 bg-red-100 outline-red-500") : ""}`
 
@@ -63,38 +63,40 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
 						>
 							{cell !== 0 ? cell : ""}
 
-							{notes[`${rowIndex}-${colIndex}`] && cell === 0 && (
+							{notes.get(`${rowIndex}-${colIndex}`) && cell === 0 && (
 								<div className="absolute top-0 left-0 w-full h-full grid grid-cols-3 grid-rows-3 justify-center items-center text-gray-400 p-1 gap-1">
-									{notes[`${rowIndex}-${colIndex}`].map((note) => {
-										let rowStart = Math.floor(note / 3)
-										let colStart = note % 3
-										if (colStart === 0) {
-											rowStart -= 1
-										}
-										if (rowStart >= 1) {
-											rowStart += 1
-										}
-										if (rowStart === 0) {
-											rowStart = 1
-										}
+									{Array.from(notes.get(`${rowIndex}-${colIndex}`) || []).map(
+										(note) => {
+											let rowStart = Math.floor(note / 3)
+											let colStart = note % 3
+											if (colStart === 0) {
+												rowStart -= 1
+											}
+											if (rowStart >= 1) {
+												rowStart += 1
+											}
+											if (rowStart === 0) {
+												rowStart = 1
+											}
 
-										if (colStart === 0) {
-											colStart = 3
-										}
+											if (colStart === 0) {
+												colStart = 3
+											}
 
-										return (
-											<div
-												key={`note-${rowIndex}-${colIndex}-${note}`}
-												style={{
-													gridRowStart: rowStart,
-													gridColumnStart: colStart,
-												}}
-												className="text-xs text-center"
-											>
-												{note}
-											</div>
-										)
-									})}
+											return (
+												<div
+													key={`note-${rowIndex}-${colIndex}-${note}`}
+													style={{
+														gridRowStart: rowStart,
+														gridColumnStart: colStart,
+													}}
+													className="text-xs text-center"
+												>
+													{note}
+												</div>
+											)
+										},
+									)}
 								</div>
 							)}
 						</div>
