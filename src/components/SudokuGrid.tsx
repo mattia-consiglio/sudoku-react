@@ -6,6 +6,7 @@ type SudokuGridProps = {
 	setSelectedCell: (cell: { row: number; col: number } | null) => void
 	generatedGrid: number[][] // Aggiungi questa proprietà per tracciare i valori generati
 	notes: { [key: string]: number[] }
+	invalidCells: Set<string>
 }
 
 const SudokuGrid: React.FC<SudokuGridProps> = ({
@@ -14,6 +15,7 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
 	setSelectedCell,
 	generatedGrid,
 	notes,
+	invalidCells,
 }) => {
 	return (
 		<div className="grid grid-cols-9 mx-auto border-2 border-gray-400">
@@ -36,7 +38,7 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
 					const isGenerated = generatedGrid[rowIndex][colIndex] !== 0
 					const divClasses = `relative w-10 h-10 flex items-center justify-center border border-gray-400 text-3xl ${borderClasses} ${
 						isSelected ? "outline outline-blue-500 z-10" : ""
-					} ${isGenerated ? "" : "text-blue-500"}`
+					} ${!isGenerated ? (!invalidCells.has(`${rowIndex}-${colIndex}`) ? "text-blue-500" : "text-red-500 bg-red-100 outline-red-500") : ""}`
 
 					const handleInteraction = () => {
 						setSelectedCell({ row: rowIndex, col: colIndex })

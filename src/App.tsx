@@ -16,6 +16,7 @@ const App: React.FC = () => {
 	} | null>(null)
 	const [noteMode, setNoteMode] = useState<boolean>(false)
 	const [notes, setNotes] = useState<{ [key: string]: number[] }>({})
+	const [invalidCells, setInvalidCells] = useState<Set<string>>(new Set())
 
 	const handleCellChange = useCallback(
 		(row: number, col: number, value: number) => {
@@ -58,15 +59,31 @@ const App: React.FC = () => {
 						[noteKey]: updatedNoteValue,
 					})
 				} else {
+					const numberCanBePlaced = canPlaceNumber(
+						grid,
+						selectedCell.row,
+						selectedCell.col,
+						value,
+					)
+
 					if (value === grid[selectedCell.row][selectedCell.col]) {
+						if (!numberCanBePlaced) {
+							invalidCells.delete(`${selectedCell.row}-${selectedCell.col}`)
+						}
 						handleCellChange(selectedCell.row, selectedCell.col, 0)
 					} else {
+						if (numberCanBePlaced) {
+							invalidCells.delete(`${selectedCell.row}-${selectedCell.col}`)
+						} else {
+							invalidCells.add(`${selectedCell.row}-${selectedCell.col}`)
+						}
 						handleCellChange(selectedCell.row, selectedCell.col, value)
 					}
+					setInvalidCells(new Set(invalidCells))
 				}
 			}
 		},
-		[grid, handleCellChange, noteMode, notes, selectedCell],
+		[grid, handleCellChange, invalidCells, noteMode, notes, selectedCell],
 	)
 
 	const handleKeyDown = useCallback(
@@ -126,6 +143,7 @@ const App: React.FC = () => {
 				setSelectedCell={setSelectedCell}
 				generatedGrid={generatedGrid}
 				notes={notes}
+				invalidCells={invalidCells}
 			/>
 
 			<Controls setNoteMode={setNoteMode} noteMode={noteMode} />
