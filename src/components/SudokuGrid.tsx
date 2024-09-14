@@ -17,6 +17,18 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
 	notes,
 	invalidCells,
 }) => {
+	const box = new Set<string>()
+
+	if (selectedCell) {
+		const startRow = Math.floor(selectedCell.row / 3) * 3
+		const startCol = Math.floor(selectedCell.col / 3) * 3
+		for (let i = 0; i < 3; i++) {
+			for (let j = 0; j < 3; j++) {
+				console.log(`${startRow + i}-${startCol + j}`)
+				box.add(`${startRow + i}-${startCol + j}`)
+			}
+		}
+	}
 	return (
 		<div className="grid grid-cols-9 mx-auto border-2 border-gray-400">
 			{grid.map((row, rowIndex) =>
@@ -36,9 +48,14 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
 						selectedCell.row === rowIndex &&
 						selectedCell.col === colIndex
 					const isGenerated = generatedGrid[rowIndex][colIndex] !== 0
+					const bgSelection =
+						selectedCell?.row === rowIndex ||
+						selectedCell?.col === colIndex ||
+						box.has(`${rowIndex}-${colIndex}`)
+
 					const divClasses = `relative w-10 h-10 flex items-center justify-center border border-gray-400 text-3xl cursor-pointer select-none ${borderClasses} ${
 						isSelected ? "outline outline-blue-500 z-10" : ""
-					} ${!isGenerated ? (!invalidCells.has(`${rowIndex}-${colIndex}`) ? "text-blue-500" : "text-red-500 bg-red-100 outline-red-500") : ""}`
+					} ${!isGenerated ? (!invalidCells.has(`${rowIndex}-${colIndex}`) ? "text-blue-500" : "text-red-500 bg-red-100 outline-red-500") : ""} ${bgSelection ? "bg-gray-200" : ""}`
 
 					const handleInteraction = () => {
 						setSelectedCell({ row: rowIndex, col: colIndex })
