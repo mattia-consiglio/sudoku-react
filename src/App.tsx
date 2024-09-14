@@ -1,8 +1,9 @@
 import type React from "react"
 import { useCallback, useEffect, useState } from "react"
 import SudokuGrid from "./components/SudokuGrid"
-import { generateSudoku } from "./utils/sudoku"
-import { HiOutlinePencil } from "react-icons/hi2"
+import { canPlaceNumber, generateSudoku } from "./utils/sudoku"
+import NumbersInput from "./components/NumbersInput"
+import Controls from "./components/Controls"
 
 const App: React.FC = () => {
 	const [grid, setGrid] = useState<number[][]>(generateSudoku())
@@ -41,27 +42,32 @@ const App: React.FC = () => {
 		setNotes({})
 	}
 
-	const handleNumberClick = (value: number) => {
-		if (selectedCell) {
-			if (noteMode) {
-				const noteKey = `${selectedCell.row}-${selectedCell.col}`
-				const noteValue = notes[noteKey] || []
-				const updatedNoteValue = noteValue.includes(value)
-					? noteValue.filter((val) => val !== value)
-					: [...noteValue, value]
-				setNotes({
-					...notes,
-					[noteKey]: updatedNoteValue,
-				})
-			} else {
-				if (value === grid[selectedCell.row][selectedCell.col]) {
-					handleCellChange(selectedCell.row, selectedCell.col, 0)
+	const handleNumberClick = useCallback(
+		(value: number) => {
+			if (selectedCell) {
+				if (noteMode) {
+					if (!canPlaceNumber(grid, selectedCell.row, selectedCell.col, value))
+						return
+					const noteKey = `${selectedCell.row}-${selectedCell.col}`
+					const noteValue = notes[noteKey] || []
+					const updatedNoteValue = noteValue.includes(value)
+						? noteValue.filter((val) => val !== value)
+						: [...noteValue, value]
+					setNotes({
+						...notes,
+						[noteKey]: updatedNoteValue,
+					})
 				} else {
-					handleCellChange(selectedCell.row, selectedCell.col, value)
+					if (value === grid[selectedCell.row][selectedCell.col]) {
+						handleCellChange(selectedCell.row, selectedCell.col, 0)
+					} else {
+						handleCellChange(selectedCell.row, selectedCell.col, value)
+					}
 				}
 			}
-		}
-	}
+		},
+		[grid, handleCellChange, noteMode, notes, selectedCell],
+	)
 
 	const handleKeyDown = useCallback(
 		(e: KeyboardEvent) => {
@@ -96,12 +102,12 @@ const App: React.FC = () => {
 					break
 				default:
 					if (e.key >= "1" && e.key <= "9") {
-						handleCellChange(row, col, Number.parseInt(e.key))
+						handleNumberClick(Number.parseInt(e.key))
 					}
 					break
 			}
 		},
-		[handleCellChange, selectedCell],
+		[handleNumberClick, selectedCell],
 	)
 
 	useEffect(() => {
@@ -122,39 +128,13 @@ const App: React.FC = () => {
 				notes={notes}
 			/>
 
-			<div className="flex items-center font-bold text-gray-600 pt-4">
-				<button
-					type="button"
-					className="flex flex-col items-center relative"
-					onClick={() => setNoteMode((prev) => !prev)}
-				>
-					<div
-						className={`absolute -right-1/2 -translate-x-1/2 -top-2 font-semibold text-xs px-1 rounded ${noteMode ? "bg-green-500 text-white" : "bg-gray-300"}`}
-					>
-						{noteMode ? "ON" : "OFF"}
-					</div>
-					<HiOutlinePencil className="text-xl font-bold" />
-					<span>Notes</span>
-				</button>
-			</div>
-			<div className="flex space-x-2 mt-4">
-				{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => {
-					const isSelected =
-						selectedCell && grid[selectedCell.row][selectedCell.col] === number
-					return (
-						<button
-							key={number}
-							onClick={() => handleNumberClick(number)}
-							className={`w-12 h-12 flex justify-center items-center text-gray-500 font-semibold rounded-full border-[3px] hover:border-gray-900 hover:text-gray-900 transition-all ${
-								isSelected ? "border-blue-500" : "border-gray-400"
-							}`}
-							type="button"
-						>
-							{number}
-						</button>
-					)
-				})}
-			</div>
+			<Controls setNoteMode={setNoteMode} noteMode={noteMode} />
+			<NumbersInput
+				onNumberClick={handleNumberClick}
+				selectCellValue={
+					selectedCell ? grid[selectedCell.row][selectedCell.col] : null
+				}
+			/>
 			<button
 				onClick={resetGrid}
 				className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"

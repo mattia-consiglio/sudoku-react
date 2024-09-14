@@ -34,7 +34,7 @@ const SudokuGrid: React.FC<SudokuGridProps> = ({
 						selectedCell.row === rowIndex &&
 						selectedCell.col === colIndex
 					const isGenerated = generatedGrid[rowIndex][colIndex] !== 0
-					const divClasses = `relative w-10 h-10 flex items-center justify-center border border-gray-400  text-3xl ${borderClasses} ${
+					const divClasses = `relative w-10 h-10 flex items-center justify-center border border-gray-400 text-3xl ${borderClasses} ${
 						isSelected ? "outline outline-blue-500 z-10" : ""
 					} ${isGenerated ? "" : "text-blue-500"}`
 

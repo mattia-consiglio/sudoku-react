@@ -15,21 +15,36 @@ const isValid = (grid: number[][], row: number, col: number, num: number): boole
 }
 
 const solveSudoku = (grid: number[][]): boolean => {
-	for (let row = 0; row < 9; row++) {
-		for (let col = 0; col < 9; col++) {
-			if (grid[row][col] === 0) {
-				for (let num = 1; num <= 9; num++) {
-					if (isValid(grid, row, col, num)) {
-						grid[row][col] = num
-						if (solveSudoku(grid)) return true
-						grid[row][col] = 0
-					}
+	const findEmptyCell = (): [number, number] | null => {
+		for (let row = 0; row < 9; row++) {
+			for (let col = 0; col < 9; col++) {
+				if (grid[row][col] === 0) {
+					return [row, col]
 				}
-				return false
 			}
 		}
+		return null
 	}
-	return true
+
+	const emptyCell = findEmptyCell()
+	if (!emptyCell) {
+		return true
+	}
+
+	const [row, col] = emptyCell
+
+	// Try numbers 1 through 9
+	for (let num = 1; num <= 9; num++) {
+		if (isValid(grid, row, col, num)) {
+			grid[row][col] = num
+			if (solveSudoku(grid)) {
+				return true
+			}
+			grid[row][col] = 0
+		}
+	}
+
+	return false
 }
 
 const fillDiagonalBox = (grid: number[][], row: number, col: number): void => {
@@ -73,4 +88,21 @@ export const generateSudoku = (): number[][] => {
 
 	solveSudoku(grid)
 	return removeNumbers(grid, 40)
+}
+
+/**
+ * Checks if a given number can be placed in a specific cell based on Sudoku rules.
+ * @param grid - The Sudoku grid.
+ * @param row - The row index of the cell.
+ * @param col - The column index of the cell.
+ * @param num - The number to be placed.
+ * @returns True if the number can be placed, otherwise false.
+ */
+export const canPlaceNumber = (
+	grid: number[][],
+	row: number,
+	col: number,
+	num: number
+): boolean => {
+	return isValid(grid, row, col, num)
 }
